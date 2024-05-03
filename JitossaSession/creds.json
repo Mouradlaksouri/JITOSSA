@@ -1,1 +1,125 @@
-{"noiseKey":{"private":{"type":"Buffer","data":"iDe8Mcb24220dF3DwNBx6z/1SK6Aaoz5PQMdBYCH2Hc="},"public":{"type":"Buffer","data":"euixwK9WxWDC7jbF6lt5l7HQBsQPXM9YcU4fh7texT4="}},"pairingEphemeralKeyPair":{"private":{"type":"Buffer","data":"CAbbTn/mSoOoQMZ1AcRv4SQwHQX9TKvElDTikRJRXVk="},"public":{"type":"Buffer","data":"F+i9cqVPzVRKqe8uPoAiFUY5wUBgn7fTVABN7YvKBU8="}},"signedIdentityKey":{"private":{"type":"Buffer","data":"SF2O9ra3KERn3mtjRQXBaZmapA7j4kbNLhwNdSfTrk0="},"public":{"type":"Buffer","data":"1oo8YQLaQb3kh5pbkMrAG4DMv8lDajFKoNk2g6ofHho="}},"signedPreKey":{"keyPair":{"private":{"type":"Buffer","data":"KOaNtPHJT8FCkGLwa9ybtkvi/SebCYymjhULKuYHfXU="},"public":{"type":"Buffer","data":"c7QZCMEzVxLf9O6GFe68N1c3MOSG+JYdhfF6H6jSJis="}},"signature":{"type":"Buffer","data":"qlqd8Vsq955baMO8TLRHJOTn1M5XpaAVzGtTdXVB3kOFSF8kg6ENSuYK3uus3yD/0SICAA4tXPhaGDAoBDb8gQ=="},"keyId":1},"registrationId":179,"advSecretKey":"97jKn8xcF5VmZ9Fb2AdT4PWXhHPePxAC1gP4TMo4fSY=","processedHistoryMessages":[{"key":{"remoteJid":"212648500568@s.whatsapp.net","fromMe":true,"id":"5060A67D6B15EDF483D552F282785BBE"},"messageTimestamp":1714752035}],"nextPreKeyId":31,"firstUnuploadedPreKeyId":31,"accountSyncCounter":1,"accountSettings":{"unarchiveChats":false},"deviceId":"wF9pnArzSeiva50LgBmFiA","phoneId":"6dc6b62a-cf7d-419d-9ba9-adb0c7a8dc7a","identityId":{"type":"Buffer","data":"nRp735fv3aGBk5hRBu8rPvsFXZw="},"registered":true,"backupToken":{"type":"Buffer","data":"7O9UpkRM5lx69AANqTbjB1GH4Yw="},"registration":{},"pairingCode":"PYJG3Z1S","me":{"id":"212648500568:6@s.whatsapp.net","lid":"52085403988194:6@lid","name":"Møurãdø"},"account":{"details":"CJ6QzJ0GEJaU1LEGGAEgACgA","accountSignatureKey":"VL4Iz9wh4RF97bwKczopTYj/PMAmkZG2aIwQ9J8P5Ao=","accountSignature":"tO1yc4mh0v4nwUAuq58D5/F6OomQGZ1dPVUc0y6iB6k7kHZfsNlPIQRU/srQsCmzQcMWk+9UvdK8UIUHc0fPBw==","deviceSignature":"A6sc0mg7KcxkKDSHuxuvLQ1ecV+IuQ9MQjwKH54RpMV43Cm5006nlcVePVyFQ/w5/fJnYkjXmDXXfAVi0b++jA=="},"signalIdentities":[{"identifier":{"name":"212648500568:6@s.whatsapp.net","deviceId":0},"identifierKey":{"type":"Buffer","data":"BVS+CM/cIeERfe28CnM6KU2I/zzAJpGRtmiMEPSfD+QK"}}],"platform":"android","lastAccountSyncTimestamp":1714752024,"myAppStateKeyId":"AAAAAE6w"}
+const qrcode = require("qrcode-terminal")
+const fs = require('fs')
+const pino = require('pino')
+const { default: makeWASocket, Browsers, delay, useMultiFileAuthState, BufferJSON, fetchLatestBaileysVersion, PHONENUMBER_MCC, DisconnectReason, makeInMemoryStore, jidNormalizedUser, makeCacheableSignalKeyStore } = require("@whiskeysockets/baileys")
+const Pino = require("pino")
+const NodeCache = require("node-cache")
+const chalk = require("chalk")
+const readline = require("readline")
+const { parsePhoneNumber } = require("libphonenumber-js")
+
+
+let phoneNumber = "212670941551"
+
+const pairingCode = !!phoneNumber || process.argv.includes("--pairing-code")
+const useMobile = process.argv.includes("--mobile")
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+const question = (text) => new Promise((resolve) => rl.question(text, resolve))
+
+
+  async function qr() {
+//------------------------------------------------------
+let { version, isLatest } = await fetchLatestBaileysVersion()
+const {  state, saveCreds } =await useMultiFileAuthState(`./sessions`)
+    const msgRetryCounterCache = new NodeCache() // for retry message, "waiting message"
+    const XeonBotInc = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: !pairingCode, // popping up QR in terminal log
+      browser: Browsers.windows('Firefox'), // for this issues https://github.com/WhiskeySockets/Baileys/issues/328
+     auth: {
+         creds: state.creds,
+         keys: makeCacheableSignalKeyStore(state.keys, Pino({ level: "fatal" }).child({ level: "fatal" })),
+      },
+      markOnlineOnConnect: true, // set false for offline
+      generateHighQualityLinkPreview: true, // make high preview link
+      getMessage: async (key) => {
+         let jid = jidNormalizedUser(key.remoteJid)
+         let msg = await store.loadMessage(jid, key.id)
+
+         return msg?.message || ""
+      },
+      msgRetryCounterCache, // Resolve waiting messages
+      defaultQueryTimeoutMs: undefined, // for this issues https://github.com/WhiskeySockets/Baileys/issues/276
+   })
+
+
+    // login use pairing code
+   // source code https://github.com/WhiskeySockets/Baileys/blob/master/Example/example.ts#L61
+   if (pairingCode && !XeonBotInc.authState.creds.registered) {
+      if (useMobile) throw new Error('Cannot use pairing code with mobile api')
+
+      let phoneNumber
+      if (!!phoneNumber) {
+         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
+         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+            console.log(chalk.bgBlack(chalk.redBright("dir code dwla dialk \n metal: +212670941551")))
+            process.exit(0)
+         }
+      } else {
+         phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Ht nmrtk bax t9der tsjl wdir lbot😍\nMetal: +212670941551 : `)))
+         phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+
+         // Ask again when entering the wrong number
+         if (!Object.keys(PHONENUMBER_MCC).some(v => phoneNumber.startsWith(v))) {
+            console.log(chalk.bgBlack(chalk.redBright("dir code dwla dialk \n metal: +212670941551")))
+
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`ktb nmrtk bax y9der ywslk paircode😍\nmetal: +212670941551 : `)))
+            phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+            rl.close()
+         }
+      }
+
+      setTimeout(async () => {
+         let code = await XeonBotInc.requestPairingCode(phoneNumber)
+         code = code?.match(/.{1,4}/g)?.join("-") || code
+         console.log(chalk.black(chalk.bgGreen(`Ha l pair code dialk : `)), chalk.black(chalk.white(code)))
+      }, 3000)
+   }
+//------------------------------------------------------
+    XeonBotInc.ev.on("connection.update",async  (s) => {
+        const { connection, lastDisconnect } = s
+        if (connection == "open") {
+            await delay(1000 * 10)
+            await XeonBotInc.sendMessage(XeonBotInc.user.id, { text: `_*معلومات البوت وصاحبه*_\n\n gtihub\nwww.github.com/omarcharaf1\n\ngithub bot \nwww.github.com/omarcharaf1/JITOSSA\n\ninstagram\nwww.instagram.com/ovmar_1\n\nwhatsapp\nwa.me/212670941551?text=hey+admin\n\n ©OMARCHARAF1` });
+            let sessionXeon = fs.readFileSync('./sessions/creds.json');
+            await delay(1000 * 2) 
+             const xeonses = await  XeonBotInc.sendMessage(XeonBotInc.user.id, { document: sessionXeon, mimetype: `application/json`, fileName: `creds.json` })
+               XeonBotInc.groupAcceptInvite("Kjm8rnDFcpb04gQNSTbW2d");
+             await XeonBotInc.sendMessage(XeonBotInc.user.id, { text: `*لاتشارك الملف مع أي شخص لاتعرفه*\n
+┌─❖
+│ hello 😽
+└┬❖  
+┌┤✑  CHOKRAN HIT ADIR Mourado
+│└────────────┈ ⳹        
+│©2024 Mourado
+└─────────────────┈ ⳹\n\n ` }, {quoted: xeonses});
+              await delay(1000 * 2) 
+              process.exit(0)
+        }
+        if (
+            connection === "close" &&
+            lastDisconnect &&
+            lastDisconnect.error &&
+            lastDisconnect.error.output.statusCode != 401
+        ) {
+            qr()
+        }
+    })
+    XeonBotInc.ev.on('creds.update', saveCreds)
+    XeonBotInc.ev.on("messages.upsert",  () => { })
+}
+qr()
+
+process.on('uncaughtException', function (err) {
+let e = String(err)
+if (e.includes("conflict")) return
+if (e.includes("not-authorized")) return
+if (e.includes("Socket connection timeout")) return
+if (e.includes("rate-overlimit")) return
+if (e.includes("Connection Closed")) return
+if (e.includes("Timed Out")) return
+if (e.includes("Value not found")) return
+console.log('Caught exception: ', err)
+})
