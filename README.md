@@ -13,7 +13,7 @@
 
 <a href="https://github.com/Omarcharaf1"><img title="Author" src="https://img.shields.io/badge/AUTHOR-Omar !-green.svg?style=for-the-badge&logo=github"></a>
 <br>
-<img src="https://komarev.com/ghpvc/?username=Omarcharaf&color=brightgreen" />
+<img src="https://komarev.com/ghpvc/?username=Mourad laksouri&color=brightgreen" />
 
 </p>
 
@@ -43,13 +43,13 @@
 
 # SETUP 
 
-1. Fork The JITOSSA Repository 
+1. Fork The Mourado Repository 
 <a href="https://github.com/Omarcharaf1/JITOSSA/fork">
-<img title="Jitossa bot"  src="https://img.shields.io/badge/FORK JITOSSA-h?color=orange&style=for-the-badge&logo=stackshare"></a>
+<img title="Mourado bot"  src="https://img.shields.io/badge/FORK Mourado-h?color=orange&style=for-the-badge&logo=stackshare"></a>
 
 2. GET creds.json
 
-   <a href='https://replit.com/@aomarcharaf20/JITOSSA-CODE' target="_blank"><img alt='PAIRE CODE HERE' src='https://img.shields.io/badge/Session_id-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=black&color=black'/></a>
+   <a href='https://replit.com/@aomarcharaf20/Mourad-CODE' target="_blank"><img alt='PAIRE CODE HERE' src='https://img.shields.io/badge/Session_id-100000?style=for-the-badge&logo=scan&logoColor=white&labelColor=black&color=black'/></a>
 
  
 
